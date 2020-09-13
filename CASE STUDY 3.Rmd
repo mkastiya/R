@@ -1,0 +1,140 @@
+---
+title: "Case Study 3 - (Visualization)"
+author: "Mayur Kastiya"
+output: html_document
+---
+
+----------------------------------------------
+
+Importing dataset
+
+```{r}
+SalesData <- read.csv("E:/My Photo/Analytics/R_Bangalore/R Case Studies (All 3 case studies)/R case study 3 (Visualization)/SalesData.csv")
+
+head(SalesData)
+```
+
+```{r}
+str(SalesData)
+```
+
+Q1. Compare Sales by region for 2016 with 2015 using bar chart
+
+```{r}
+require(ggplot2)
+require(tidyr)
+options(scipen = 999)
+
+Region_sales <- SalesData %>% gather(SalesYear,Sales,Sales2015:Sales2016) %>% dplyr::group_by(Region,SalesYear) %>% dplyr::summarise(Sum = sum(Sales))
+
+Sales_Comparison <- ggplot(Region_sales) + aes(x = Region, y= Sum, fill=SalesYear) + geom_bar(stat="identity", position=position_dodge())+ geom_text(aes(label=round(Sum)))
+
+Sales_Comparison
+
+```
+
+Q2. Pie charts for sales for each region is 2016
+
+```{r}
+Region_2016_Pie <- Region_sales %>% dplyr::filter(SalesYear == "Sales2016")
+
+pie(x = Region_2016_Pie$Sum, labels = Region_2016_Pie$Region, main = "Pie Chart of Sales 2016")
+```
+
+```{r}
+pct <- prop.table(Region_2016_Pie$Sum) * 100
+lbl <- paste0(round(pct,1),"%")
+
+pie(Region_2016_Pie$Sum, labels = paste(lbl,":",Region_2016_Pie$Region), col = rainbow(length(Region_2016_Pie$Sum)), main = "Pie chart of sales 2016")
+```
+
+```{r}
+require(plotrix)
+pie3D(Region_2016_Pie$Sum, labels = paste(lbl,":",Region_2016_Pie$Region), col = rainbow(length(Region_2016_Pie$Sum)), explode = 0.1, main = "Pie chart of sales 2016")
+```
+
+Q3. Compare sales of 2015 and 2016 with Region and Tiers
+
+```{r}
+Region_Tier_Sales <- SalesData %>% gather(SalesYear,Sales,Sales2015:Sales2016) %>% dplyr::group_by(Region,Tier,SalesYear) %>% dplyr::summarise(Sales = sum(Sales))
+
+Region_Tier_Bar <- ggplot(Region_Tier_Sales) + aes(x = Tier, y= Sales, fill=SalesYear) + geom_bar(stat = "identity", position = "dodge") + facet_grid(. ~ Region)
+
+Region_Tier_Bar
+```
+
+Q4. In East region, which state registered a decline in 2016 as compared to 2015?
+
+```{r}
+East_Region_Sales <- SalesData %>% gather(SalesYear,Sales,Sales2015:Sales2016) %>% dplyr::filter(Region == "East") %>% dplyr::group_by(Region, SalesYear, State) %>% dplyr::summarise(Sales = sum(Sales))
+
+East_Region_Bar <- ggplot(East_Region_Sales) + aes(x = State, y= Sales, fill=SalesYear) + geom_bar(stat = "identity", position = "dodge")
+
+East_Region_Bar
+```
+
+```{r}
+paste("In East region, NY registered a decline in Sales in 2016")
+```
+
+Q5. In all the High tier, which division saw a decline in number of units sold in 2016 compared to 2015?
+
+```{r}
+High_Tier_Units <- SalesData %>% gather(Year,Units,Units2015:Units2016) %>% dplyr::filter(Tier == "High") %>% dplyr::group_by(Year, Division) %>% dplyr::summarise(Units = sum(Units))
+
+High_Tier_Bar <- ggplot(High_Tier_Units) + aes(x = Units, y= Division, fill=Year) + geom_bar(stat = "identity", position = "dodge")
+
+High_Tier_Bar
+```
+
+```{r}
+paste("There is no division which saw a decline in number of units sold in 2016 compared to 2015 for High tier")
+```
+
+Q6. Create a new column Qtr -
+Jan-Mar : Q1
+Apr-Jun : Q2
+Jul-Sep : Q3
+Oct-Dec : Q4
+
+```{r}
+SalesData$Qtr <- ifelse((SalesData$Month == "Jan" | SalesData$Month == "Feb" | SalesData$Month == "Mar"), "Q1", ifelse((SalesData$Month == "Apr" | SalesData$Month == "May" | SalesData$Month == "Jun"), "Q2", ifelse((SalesData$Month == "Jul" | SalesData$Month == "Aug" | SalesData$Month == "Sep"), "Q3", "Q4")))
+```
+
+Q7. Compare Qtr wise sales in 2015 and 2016 in a bar plot
+
+```{r}
+Qtr_wise_Sales <- SalesData %>% gather(SalesYear,Sales,Sales2015:Sales2016) %>% dplyr::group_by(Qtr,SalesYear) %>% dplyr::summarise(Sales = sum(Sales))
+
+Qtr_wise_Bar <- ggplot(Qtr_wise_Sales) + aes(x = Qtr, y= Sales, fill=SalesYear) + geom_bar(stat = "identity", position = "dodge")
+
+Qtr_wise_Bar
+```
+
+Q8. Determine the compostion of Qtr wise sales in 2015 with regards to all tiers in a pie chart. (Draw 4 pie charts representing a Quarter for each tier)
+
+```{r}
+Qtr_wise_tier <- SalesData %>% gather(SalesYear,Sales,Sales2015:Sales2016) %>% dplyr::group_by(Qtr,Tier,SalesYear) %>% dplyr::summarise(Sales = sum(Sales)) %>% dplyr::filter(SalesYear == "Sales2015")
+
+Q1 <- Qtr_wise_tier %>% dplyr::filter(Qtr == "Q1")
+Q2 <- Qtr_wise_tier %>% dplyr::filter(Qtr == "Q2")
+Q3 <- Qtr_wise_tier %>% dplyr::filter(Qtr == "Q3")
+Q4 <- Qtr_wise_tier %>% dplyr::filter(Qtr == "Q4")
+```
+
+```{r}
+pie(x = Q1$Sales, labels = Q1$Tier, main = "Qtr1")
+```
+
+```{r}
+pie(x = Q2$Sales, labels = Q2$Tier, main = "Qtr2")
+```
+
+```{r}
+pie(x = Q3$Sales, labels = Q3$Tier, main = "Qtr3")
+```
+
+```{r}
+pie(x = Q4$Sales, labels = Q4$Tier, main = "Qtr4")
+```
+
